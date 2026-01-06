@@ -29,11 +29,11 @@
   <view class="legend">
     <view class="legend-item">
       <view class="color-box up"></view>
-      <text>红涨（周日>周一）</text>
+      <text>红涨（周日&gt;周一）</text>
     </view>
     <view class="legend-item">
       <view class="color-box down"></view>
-      <text>绿跌（周日<周一）</text>
+      <text>绿跌（周日&lt;周一）</text>
     </view>
   </view>
 </view>
