@@ -1,0 +1,32 @@
+# 微信小程序
+miniprogram/.DS_Store
+miniprogram/miniprogram_npm/
+miniprogram/node_modules/
+
+# 云函数
+cloudfunctions/**/node_modules/
+cloudfunctions/**/.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 临时文件
+*.tmp
+*.temp
+
+# 微信开发者工具
+.private/

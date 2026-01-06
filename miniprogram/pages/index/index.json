@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "ec-canvas": "../../lib/ec-canvas/ec-canvas"
+  },
+  "navigationBarTitleText": "天气K线图",
+  "enablePullDownRefresh": true
+}

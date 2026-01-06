@@ -1,0 +1,8 @@
+{
+  "envList": [
+    {
+      "envId": "your_cloud_env_id",
+      "alias": "prod"
+    }
+  ]
+}

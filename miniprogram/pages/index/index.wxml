@@ -1,0 +1,39 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- 城市选择器 -->
+  <view class="city-selector">
+    <picker mode="selector" range="{{cities}}" range-key="name" bindchange="onCityChange">
+      <view class="picker">
+        <text class="city-name">{{selectedCityName}}</text>
+        <text class="arrow">▼</text>
+      </view>
+    </picker>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading">
+    <text>加载中...</text>
+  </view>
+
+  <!-- 错误提示 -->
+  <view wx:if="{{errorMsg}}" class="error">
+    <text>{{errorMsg}}</text>
+  </view>
+
+  <!-- K线图容器 -->
+  <view wx:if="{{!loading && !errorMsg}}" class="chart-container">
+    <ec-canvas id="mychart-dom-kline" canvas-id="mychart-kline" ec="{{ ec }}"></ec-canvas>
+  </view>
+
+  <!-- 图例说明 -->
+  <view class="legend">
+    <view class="legend-item">
+      <view class="color-box up"></view>
+      <text>红涨（周日>周一）</text>
+    </view>
+    <view class="legend-item">
+      <view class="color-box down"></view>
+      <text>绿跌（周日<周一）</text>
+    </view>
+  </view>
+</view>

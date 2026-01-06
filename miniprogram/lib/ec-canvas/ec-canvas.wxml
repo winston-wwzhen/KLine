@@ -1,0 +1,22 @@
+<!-- ec-canvas.wxml -->
+<canvas
+  type="2d"
+  id="{{canvasId}}"
+  class="ec-canvas"
+  canvas-id="{{canvasId}}"
+  bindinit="init"
+  bindtouchstart="{{ec.touchStart}}"
+  bindtouchmove="{{ec.touchMove}}"
+  bindtouchend="{{ec.touchEnd}}"
+  wx:if="{{isUseNewCanvas}}"
+></canvas>
+
+<canvas
+  canvas-id="{{canvasId}}"
+  id="{{canvasId}}"
+  class="ec-canvas"
+  bindtouchstart="{{ec.touchStart}}"
+  bindtouchmove="{{ec.touchMove}}"
+  bindtouchend="{{ec.touchEnd}}"
+  wx:else
+></canvas>

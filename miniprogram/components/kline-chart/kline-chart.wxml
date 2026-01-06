@@ -1,0 +1,8 @@
+<!-- kline-chart.wxml -->
+<view class="kline-chart">
+  <ec-canvas
+    id="kline-chart"
+    canvas-id="kline-canvas"
+    ec="{{ ec }}"
+  ></ec-canvas>
+</view>
