@@ -21,25 +21,57 @@ function sleep(ms) {
  */
 function parseAIResponse(response) {
   try {
-    // 查找JSON数组部分（关键词）
-    const jsonArrayMatch = response.match(/^\s*\[[\s\S]*?\]\s*(?:\n|$)/);
     let keywords = [];
-    let report = response;
+    let report = response.trim();
 
-    if (jsonArrayMatch) {
-      try {
-        keywords = JSON.parse(jsonArrayMatch[0]);
-        // 移除关键词部分，保留报告
-        report = response.substring(jsonArrayMatch[0].length).trim();
+    // 尝试多种模式查找 JSON 数组
+    // 模式1: 开头的 JSON 数组
+    let match = report.match(/^\s*\[[\s\S]*?\]\s*(?:\n|$)/);
 
-        // 如果报告以 "---" 或 "===" 等分隔符开头，移除它们
-        report = report.replace(/^[-=]{3,}\s*\n/, '').trim();
-      } catch (e) {
-        // JSON解析失败，整个内容都是报告
-        console.warn("关键词JSON解析失败:", e.message);
-        keywords = [];
-        report = response;
+    // 模式2: 任意位置的 JSON 数组（单行）
+    if (!match) {
+      match = report.match(/\[("[^"]*",?\s*)+\]/);
+    }
+
+    // 模式3: 更宽松的 JSON 数组匹配
+    if (!match) {
+      // 查找所有可能的 JSON 数组
+      const jsonMatches = report.match(/\[[^\]]*\]/g);
+      if (jsonMatches) {
+        for (const m of jsonMatches) {
+          try {
+            const parsed = JSON.parse(m);
+            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string') {
+              match = [m];
+              break;
+            }
+          } catch (e) {
+            // 继续尝试下一个
+          }
+        }
       }
+    }
+
+    if (match) {
+      try {
+        keywords = JSON.parse(match[0]);
+        console.log("成功提取关键词:", keywords);
+
+        // 从报告中移除关键词部分
+        // 移除匹配到的 JSON 及其前后的空行
+        report = report.replace(match[0], '').trim();
+
+        // 移除可能存在的分隔符（如 ---, ===, *** 等）
+        report = report.replace(/^[-=*]{3,}\s*\n?/, '').trim();
+
+        // 移除开头的空行
+        report = report.replace(/^\s+/, '');
+      } catch (e) {
+        console.warn("关键词JSON解析失败:", e.message, "原始匹配:", match[0]);
+        keywords = [];
+      }
+    } else {
+      console.log("未找到关键词JSON数组，使用原始响应");
     }
 
     return { keywords, report };

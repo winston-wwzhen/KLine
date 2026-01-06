@@ -421,9 +421,20 @@ Page({
         const timestamp = new Date(res.result.timestamp);
         const timeStr = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}`;
 
+        // 解析关键词（兼容旧数据：如果数据库没有keywords字段，从报告中提取）
+        let keywords = res.result.keywords || [];
+        let report = res.result.report || '';
+
+        // 如果数据库没有关键词，尝试从报告中解析
+        if (!keywords || keywords.length === 0) {
+          const parsed = this.parseKeywordsFromReport(report);
+          keywords = parsed.keywords;
+          report = parsed.cleanReport;
+        }
+
         this.setData({
-          analysisReport: res.result.report,
-          reportKeywords: res.result.keywords || [],
+          analysisReport: report,
+          reportKeywords: keywords,
           reportTime: timeStr,
           analyzing: false,
           showReportModal: true
@@ -449,6 +460,57 @@ Page({
         duration: 2000
       });
     });
+  },
+
+  /**
+   * 解析报告中的关键词（兼容旧数据）
+   */
+  parseKeywordsFromReport(report) {
+    if (!report) return { keywords: [], cleanReport: '' };
+
+    let keywords = [];
+    let cleanReport = report;
+
+    // 尝试多种模式查找 JSON 数组
+    // 模式1: 开头的 JSON 数组
+    let match = cleanReport.match(/^\s*\[[\s\S]*?\]\s*(?:\n|$)/);
+
+    // 模式2: 任意位置的 JSON 数组（单行）
+    if (!match) {
+      match = cleanReport.match(/\[("[^"]*",?\s*)+\]/);
+    }
+
+    // 模式3: 更宽松的 JSON 数组匹配
+    if (!match) {
+      const jsonMatches = cleanReport.match(/\[[^\]]*\]/g);
+      if (jsonMatches) {
+        for (const m of jsonMatches) {
+          try {
+            const parsed = JSON.parse(m);
+            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string') {
+              match = [m];
+              break;
+            }
+          } catch (e) {
+            // 继续尝试
+          }
+        }
+      }
+    }
+
+    if (match) {
+      try {
+        keywords = JSON.parse(match[0]);
+        // 从报告中移除关键词部分
+        cleanReport = cleanReport.replace(match[0], '').trim();
+        // 移除分隔符
+        cleanReport = cleanReport.replace(/^[-=*]{3,}\s*\n?/, '').trim();
+      } catch (e) {
+        console.warn('解析关键词失败:', e);
+      }
+    }
+
+    return { keywords, cleanReport };
   },
 
   /**

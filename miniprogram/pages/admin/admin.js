@@ -38,12 +38,20 @@ Page({
       });
 
       if (res.result.success) {
-        const reports = res.result.reports.map(r => ({
-          cityName: r.cityName,
-          modeLabel: DISPLAY_MODES.find(m => m.value === r.mode)?.label || r.mode,
-          time: this.formatDate(r.updateTime || r.createTime),
-          keywords: r.keywords || []
-        }));
+        const reports = res.result.reports.map(r => {
+          // 如果数据库没有关键词，尝试从报告中解析
+          let keywords = r.keywords || [];
+          if (!keywords || keywords.length === 0) {
+            keywords = this.parseKeywordsFromReport(r.report);
+          }
+
+          return {
+            cityName: r.cityName,
+            modeLabel: DISPLAY_MODES.find(m => m.value === r.mode)?.label || r.mode,
+            time: this.formatDate(r.updateTime || r.createTime),
+            keywords: keywords
+          };
+        });
 
         this.setData({
           reportList: reports.slice(0, 10) // 只显示前10条
@@ -383,5 +391,48 @@ Page({
   formatDate(isoString) {
     const date = new Date(isoString);
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  },
+
+  /**
+   * 解析报告中的关键词（兼容旧数据）
+   */
+  parseKeywordsFromReport(report) {
+    if (!report) return [];
+
+    let keywords = [];
+
+    // 尝试多种模式查找 JSON 数组
+    let match = report.match(/^\s*\[[\s\S]*?\]\s*(?:\n|$)/);
+
+    if (!match) {
+      match = report.match(/\[("[^"]*",?\s*)+\]/);
+    }
+
+    if (!match) {
+      const jsonMatches = report.match(/\[[^\]]*\]/g);
+      if (jsonMatches) {
+        for (const m of jsonMatches) {
+          try {
+            const parsed = JSON.parse(m);
+            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'string') {
+              match = [m];
+              break;
+            }
+          } catch (e) {
+            // 继续尝试
+          }
+        }
+      }
+    }
+
+    if (match) {
+      try {
+        keywords = JSON.parse(match[0]);
+      } catch (e) {
+        console.warn('解析关键词失败:', e);
+      }
+    }
+
+    return keywords;
   }
 });
