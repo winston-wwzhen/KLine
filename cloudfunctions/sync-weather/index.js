@@ -2,8 +2,6 @@
  * sync-weather 云函数
  * 从 Open-Meteo API 获取天气数据并写入云数据库
  * 用于初始化数据，手动调用一次即可
- *
- * 省会城市数据
  */
 const cloud = require('wx-server-sdk');
 const request = require('request-promise');
@@ -14,6 +12,7 @@ cloud.init({
 });
 
 const db = cloud.database();
+const _ = db.command;
 
 // 31个省会城市数据
 const PROVINCE_CAPITALS = [
@@ -102,18 +101,30 @@ function transformWeatherData(city, weatherData) {
 }
 
 /**
- * 批量写入数据库（每次最多500条）
+ * 逐条写入数据库（微信云数据库的限制）
  */
-async function batchInsert(records) {
-  const batchSize = 500;
-  const promises = [];
+async function insertRecords(records) {
+  let count = 0;
 
-  for (let i = 0; i < records.length; i += batchSize) {
-    const batch = records.slice(i, i + batchSize);
-    promises.push(db.collection('weather_data').add({ data: batch }));
+  for (const record of records) {
+    try {
+      await db.collection('weather_data').add({
+        data: record
+      });
+      count++;
+    } catch (err) {
+      console.error('插入记录失败:', record.date, err);
+      throw err;
+    }
+
+    // 每50条记录输出一次进度
+    if (count % 50 === 0) {
+      console.log(`已插入 ${count}/${records.length} 条记录`);
+    }
   }
 
-  await Promise.all(promises);
+  console.log(`共插入 ${count} 条记录`);
+  return count;
 }
 
 exports.main = async (event, context) => {
@@ -121,20 +132,24 @@ exports.main = async (event, context) => {
   let failCount = 0;
   const errors = [];
 
+  console.log('开始同步天气数据...');
+  console.log(`总计城市: ${PROVINCE_CAPITALS.length}`);
+
   for (const city of PROVINCE_CAPITALS) {
     try {
-      console.log(`正在处理 ${city.name} (${city.en})...`);
+      console.log(`\n正在处理 ${city.name} (${city.en})...`);
 
       // 1. 从 Open-Meteo API 获取数据
       const weatherData = await fetchWeatherData(city);
 
       // 2. 转换数据格式
       const records = transformWeatherData(city, weatherData);
+      console.log(`获取到 ${records.length} 条数据`);
 
       // 3. 写入云数据库
-      await batchInsert(records);
+      await insertRecords(records);
 
-      console.log(`${city.name} 数据同步成功，共 ${records.length} 条记录`);
+      console.log(`${city.name} 数据同步成功`);
       successCount++;
 
     } catch (err) {
@@ -146,6 +161,11 @@ exports.main = async (event, context) => {
       });
     }
   }
+
+  console.log('\n=== 同步完成 ===');
+  console.log(`总计: ${PROVINCE_CAPITALS.length}`);
+  console.log(`成功: ${successCount}`);
+  console.log(`失败: ${failCount}`);
 
   return {
     success: true,
