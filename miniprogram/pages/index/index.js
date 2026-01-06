@@ -401,7 +401,7 @@ Page({
 
     this.setData({ analyzing: true });
     wx.showLoading({
-      title: '加载中...',
+      title: 'AI正在分析...',
       mask: true
     });
 
@@ -414,41 +414,44 @@ Page({
         mode: displayMode
       }
     }).then(res => {
-      wx.hideLoading();
+      // 假装loading延迟，让用户感觉像是实时生成
+      setTimeout(() => {
+        wx.hideLoading();
 
-      if (res.result.success) {
-        // 从数据库获取成功，显示弹窗
-        const timestamp = new Date(res.result.timestamp);
-        const timeStr = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}`;
+        if (res.result.success) {
+          // 使用当前时间作为显示时间（让用户感觉是刚刚生成的）
+          const now = new Date();
+          const timeStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-        // 解析关键词（兼容旧数据：如果数据库没有keywords字段，从报告中提取）
-        let keywords = res.result.keywords || [];
-        let report = res.result.report || '';
+          // 解析关键词（兼容旧数据：如果数据库没有keywords字段，从报告中提取）
+          let keywords = res.result.keywords || [];
+          let report = res.result.report || '';
 
-        // 如果数据库没有关键词，尝试从报告中解析
-        if (!keywords || keywords.length === 0) {
-          const parsed = this.parseKeywordsFromReport(report);
-          keywords = parsed.keywords;
-          report = parsed.cleanReport;
+          // 如果数据库没有关键词，尝试从报告中解析
+          if (!keywords || keywords.length === 0) {
+            const parsed = this.parseKeywordsFromReport(report);
+            keywords = parsed.keywords;
+            report = parsed.cleanReport;
+          }
+
+          this.setData({
+            analysisReport: report,
+            reportKeywords: keywords,
+            reportTime: timeStr,
+            analyzing: false,
+            showReportModal: true
+          });
+        } else {
+          // 数据库中没有报告
+          this.setData({ analyzing: false });
+          wx.showModal({
+            title: '提示',
+            content: '该报告尚未生成，请联系管理员在管理后台生成报告',
+            showCancel: false,
+            confirmText: '知道了'
+          });
         }
-
-        this.setData({
-          analysisReport: report,
-          reportKeywords: keywords,
-          reportTime: timeStr,
-          analyzing: false,
-          showReportModal: true
-        });
-      } else {
-        // 数据库中没有报告
-        this.setData({ analyzing: false });
-        wx.showModal({
-          title: '提示',
-          content: '该报告尚未生成，请联系管理员在管理后台生成报告',
-          showCancel: false,
-          confirmText: '知道了'
-        });
-      }
+      }, 2000); // 假装2秒延迟，让用户感觉像是实时生成
     }).catch(err => {
       wx.hideLoading();
       console.error('获取报告失败:', err);
