@@ -25,9 +25,19 @@
     </view>
   </view>
 
-  <!-- 模式说明 -->
+  <!-- 模式说明 + 图例 -->
   <view class="mode-desc-card">
     <text class="mode-desc-text">{{modeDesc}}</text>
+    <view class="legend-compact">
+      <view class="legend-item">
+        <view class="color-box up"></view>
+        <text>红涨</text>
+      </view>
+      <view class="legend-item">
+        <view class="color-box down"></view>
+        <text>绿跌</text>
+      </view>
+    </view>
   </view>
 
   <!-- 加载状态 -->
@@ -41,47 +51,84 @@
   </view>
 
   <!-- K线图容器 -->
-  <view wx:if="{{!loading && !errorMsg}}" class="chart-container">
+  <view wx:if="{{!loading && !errorMsg && !showReportModal}}" class="chart-container">
     <kline-chart klineData="{{klineData}}" displayMode="{{displayMode}}"></kline-chart>
   </view>
 
-  <!-- 图例说明 -->
-  <view class="legend">
-    <view class="legend-item">
-      <view class="color-box up"></view>
-      <text>红色：上涨</text>
+  <!-- 基础数据统计 -->
+  <view wx:if="{{!loading && !errorMsg && klineData.length > 0}}" class="stats-card">
+    <view class="stats-title">📈 数据统计</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-value">{{stats.ups}}</text>
+        <text class="stat-label">上涨周数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.downs}}</text>
+        <text class="stat-label">下跌周数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.maxHigh}}</text>
+        <text class="stat-label">最高点</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.minLow}}</text>
+        <text class="stat-label">最低点</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.avgChange}}</text>
+        <text class="stat-label">平均变化</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.totalWeeks}}</text>
+        <text class="stat-label">总周数</text>
+      </view>
     </view>
-    <view class="legend-item">
-      <view class="color-box down"></view>
-      <text>绿色：下跌</text>
+    <view class="stats-range">
+      <text class="range-text">📅 时间范围：{{stats.dateRange}}</text>
     </view>
   </view>
 
   <!-- AI分析按钮 -->
   <view wx:if="{{!loading && !errorMsg && klineData.length > 0}}" class="analyze-section">
     <button class="analyze-btn" bindtap="onGenerateReport" disabled="{{analyzing}}">
-      <text wx:if="{{!analyzing}}">✨ AI生成分析报告</text>
-      <text wx:else="{{analyzing}}">🤖 分析中...</text>
+      <text wx:if="{{!analyzing}}">🔮 AI分析</text>
+      <text wx:else="{{analyzing}}">🔮 分析中...</text>
     </button>
   </view>
 
-  <!-- AI分析报告 -->
-  <view wx:if="{{analysisReport}}" class="report-card">
-    <view class="report-header">
-      <text class="report-title">📊 {{selectedCityName}}年度温度K线分析报告</text>
-      <text class="report-mode">{{displayModeLabel}}模式</text>
+  <!-- AI分析报告弹窗 -->
+  <view wx:if="{{showReportModal}}" class="report-modal" bindtap="onCloseReport">
+    <view class="report-modal-content" catchtap="onStopPropagation">
+      <!-- 关闭按钮 -->
+    <view class="report-close-btn" bindtap="onCloseReport">
+      <text>✕</text>
     </view>
-    <view class="report-content">
-      <text class="report-text">{{analysisReport}}</text>
-    </view>
-    <view class="report-footer">
-      <text class="report-time">生成时间：{{reportTime}}</text>
-    </view>
-    <!-- 分享按钮 -->
-    <view class="share-section">
-      <button class="share-btn" bindtap="onShareReport" open-type="share">
-        <text>📱 分享给好友</text>
-      </button>
+
+      <view class="report-header">
+        <text class="report-title">📊 {{selectedCityName}}年度温度K线分析报告</text>
+        <text class="report-mode">{{displayModeLabel}}模式</text>
+      </view>
+
+      <!-- 关键词标签 -->
+      <view wx:if="{{reportKeywords.length > 0}}" class="keywords-section">
+        <view class="keyword-tag" wx:for="{{reportKeywords}}" wx:key="index">
+          <text>{{item}}</text>
+        </view>
+      </view>
+
+      <view class="report-content">
+        <text class="report-text">{{analysisReport}}</text>
+      </view>
+      <view class="report-footer">
+        <text class="report-time">生成时间：{{reportTime}}</text>
+      </view>
+      <!-- 分享按钮 -->
+      <view class="share-section">
+        <button class="share-btn" bindtap="onShareReport" open-type="share">
+          <text>📱 分享给好友</text>
+        </button>
+      </view>
     </view>
   </view>
 </view>

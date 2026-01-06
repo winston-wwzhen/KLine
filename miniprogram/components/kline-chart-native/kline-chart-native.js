@@ -15,13 +15,31 @@ Component({
 
   data: {
     canvasWidth: 0,
-    canvasHeight: 0
+    canvasHeight: 0,
+    isEmpty: false
   },
 
   observers: {
     'klineData': function(newData) {
-      if (newData && newData.length > 0) {
+      if (!newData || newData.length === 0) {
+        this.setData({ isEmpty: true });
+        return;
+      }
+
+      this.setData({ isEmpty: false });
+
+      // 检查数据是否有效
+      const hasValidData = newData.some(item =>
+        item.open !== undefined &&
+        item.close !== undefined &&
+        item.high !== undefined &&
+        item.low !== undefined
+      );
+
+      if (hasValidData) {
         this.drawChart(newData);
+      } else {
+        this.setData({ isEmpty: true });
       }
     }
   },
@@ -82,7 +100,7 @@ Component({
       ctx.clearRect(0, 0, width, height);
 
       // 配置
-      const padding = { top: 40, right: 40, bottom: 40, left: 50 };
+      const padding = { top: 40, right: 40, bottom: 40, left: 60 };
       const chartWidth = width - padding.left - padding.right;
       const chartHeight = height - padding.top - padding.bottom;
 
@@ -128,7 +146,7 @@ Component({
 
         // 绘制影线
         ctx.strokeStyle = color;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(x, highY);
         ctx.lineTo(x, lowY);
@@ -138,7 +156,17 @@ Component({
         const bodyTop = Math.min(openY, closeY);
         const bodyHeight = Math.abs(closeY - openY) || 1;
 
-        ctx.fillStyle = color;
+        // 填充渐变
+        const gradient = ctx.createLinearGradient(0, bodyTop, 0, bodyTop + bodyHeight);
+        if (isUp) {
+          gradient.addColorStop(0, 'rgba(239, 83, 80, 0.8)');
+          gradient.addColorStop(1, 'rgba(229, 57, 53, 0.6)');
+        } else {
+          gradient.addColorStop(0, 'rgba(38, 166, 154, 0.8)');
+          gradient.addColorStop(1, 'rgba(0, 137, 123, 0.6)');
+        }
+
+        ctx.fillStyle = gradient;
         ctx.fillRect(x - candleWidth / 2, bodyTop, candleWidth, bodyHeight);
 
         // 绘制边框
@@ -158,7 +186,7 @@ Component({
      * 绘制网格线
      */
     drawGrid(ctx, width, height, padding) {
-      ctx.strokeStyle = '#e0e0e0';
+      ctx.strokeStyle = '#e5e5e5';
       ctx.lineWidth = 0.5;
 
       // 水平网格线
@@ -203,7 +231,7 @@ Component({
 
       // Y轴刻度
       ctx.fillStyle = '#666';
-      ctx.font = '10px sans-serif';
+      ctx.font = '11px sans-serif';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
 

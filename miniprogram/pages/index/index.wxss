@@ -35,7 +35,7 @@
 
 /* 选择器区域 */
 .selectors-section {
-  padding: 32rpx 24rpx 24rpx;
+  padding: 24rpx 24rpx 16rpx;
   position: relative;
   z-index: 1;
 }
@@ -43,7 +43,7 @@
 /* 选择器行 */
 .selectors-row {
   display: flex;
-  gap: 20rpx;
+  gap: 16rpx;
 }
 
 /* 城市选择器 - 渐变玻璃态 */
@@ -52,13 +52,13 @@
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
   backdrop-filter: blur(10px);
   border: 1rpx solid rgba(99, 102, 241, 0.3);
-  border-radius: 20rpx;
-  padding: 24rpx;
+  border-radius: 16rpx;
+  padding: 16rpx;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   box-shadow:
-    0 8rpx 32rpx rgba(99, 102, 241, 0.2),
+    0 6rpx 24rpx rgba(99, 102, 241, 0.2),
     inset 0 1rpx 0 rgba(255, 255, 255, 0.1);
 }
 
@@ -90,13 +90,13 @@
   background: linear-gradient(135deg, rgba(236, 72, 153, 0.15) 0%, rgba(244, 114, 182, 0.1) 100%);
   backdrop-filter: blur(10px);
   border: 1rpx solid rgba(236, 72, 153, 0.3);
-  border-radius: 20rpx;
-  padding: 24rpx;
+  border-radius: 16rpx;
+  padding: 16rpx;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
   box-shadow:
-    0 8rpx 32rpx rgba(236, 72, 153, 0.2),
+    0 6rpx 24rpx rgba(236, 72, 153, 0.2),
     inset 0 1rpx 0 rgba(255, 255, 255, 0.1);
 }
 
@@ -132,9 +132,9 @@
 }
 
 .label {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: rgba(255, 255, 255, 0.6);
-  margin-bottom: 8rpx;
+  margin-bottom: 6rpx;
   font-weight: 500;
   letter-spacing: 1rpx;
   text-transform: uppercase;
@@ -142,7 +142,7 @@
 
 .city-name,
 .mode-label {
-  font-size: 30rpx;
+  font-size: 26rpx;
   font-weight: 700;
   background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
   -webkit-background-clip: text;
@@ -155,9 +155,9 @@
 .mode-desc-card {
   background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.4) 100%);
   backdrop-filter: blur(20px);
-  margin: 0 24rpx 24rpx;
-  padding: 28rpx 24rpx;
-  border-radius: 20rpx;
+  margin: 0 24rpx 16rpx;
+  padding: 10rpx 16rpx;
+  border-radius: 12rpx;
   border: 1rpx solid rgba(255, 255, 255, 0.1);
   box-shadow:
     0 8rpx 32rpx rgba(0, 0, 0, 0.3),
@@ -165,6 +165,9 @@
   position: relative;
   z-index: 1;
   overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .mode-desc-card::before {
@@ -172,7 +175,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 4rpx;
+  width: 2rpx;
   height: 100%;
   background: linear-gradient(180deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
 }
@@ -188,12 +191,56 @@
 }
 
 .mode-desc-text {
-  font-size: 25rpx;
+  font-size: 20rpx;
   color: rgba(255, 255, 255, 0.85);
-  line-height: 44rpx;
-  margin-left: 16rpx;
+  line-height: 32rpx;
+  margin-left: 10rpx;
   position: relative;
   z-index: 1;
+  flex: 1;
+  padding-right: 16rpx;
+}
+
+/* 紧凑型图例 */
+.legend-compact {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  position: relative;
+  z-index: 1;
+}
+
+.legend-compact .legend-item {
+  display: flex;
+  align-items: center;
+}
+
+.legend-compact .legend-item text {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.7);
+  margin-left: 6rpx;
+  font-weight: 500;
+}
+
+.legend-compact .color-box {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 4rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+}
+
+.legend-compact .color-box.up {
+  background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
+  box-shadow:
+    0 4rpx 12rpx rgba(239, 83, 80, 0.4),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.2);
+}
+
+.legend-compact .color-box.down {
+  background: linear-gradient(135deg, #26a69a 0%, #00897b 100%);
+  box-shadow:
+    0 4rpx 12rpx rgba(38, 166, 154, 0.4),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.2);
 }
 
 /* 加载状态 */
@@ -252,54 +299,89 @@ ec-canvas {
   height: 100%;
 }
 
-/* 图例说明 - 渐变玻璃态 */
-.legend {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 24rpx 32rpx;
-  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.3) 100%);
-  backdrop-filter: blur(10px);
+/* 基础数据统计卡片 */
+.stats-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.4) 100%);
+  backdrop-filter: blur(20px);
   margin: 0 24rpx 24rpx;
+  padding: 20rpx 20rpx;
   border-radius: 20rpx;
   border: 1rpx solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 8rpx 32rpx rgba(0, 0, 0, 0.3),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.1);
   position: relative;
   z-index: 1;
 }
 
-.legend-item {
-  display: flex;
-  align-items: center;
-  margin: 0 28rpx;
+.stats-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2rpx;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
 }
 
-.legend-item text {
-  font-size: 25rpx;
-  color: rgba(255, 255, 255, 0.8);
-  margin-left: 12rpx;
+.stats-title {
+  font-size: 24rpx;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 16rpx;
+  letter-spacing: 1rpx;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx 8rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.stat-item:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.stat-value {
+  font-size: 28rpx;
+  font-weight: 700;
+  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.8) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4rpx;
+}
+
+.stat-label {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.5);
   font-weight: 500;
 }
 
-.color-box {
-  width: 36rpx;
-  height: 36rpx;
-  border-radius: 8rpx;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+.stats-range {
+  display: flex;
+  justify-content: center;
+  padding-top: 12rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 
-.color-box.up {
-  background: linear-gradient(135deg, #ef5350 0%, #e53935 100%);
-  box-shadow:
-    0 4rpx 12rpx rgba(239, 83, 80, 0.4),
-    inset 0 1rpx 0 rgba(255, 255, 255, 0.2);
-}
-
-.color-box.down {
-  background: linear-gradient(135deg, #26a69a 0%, #00897b 100%);
-  box-shadow:
-    0 4rpx 12rpx rgba(38, 166, 154, 0.4),
-    inset 0 1rpx 0 rgba(255, 255, 255, 0.2);
+.range-text {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
 }
 
 /* AI分析按钮区域 */
@@ -316,7 +398,7 @@ ec-canvas {
   border-radius: 24rpx;
   border: none;
   color: #fff;
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -380,6 +462,28 @@ ec-canvas {
   right: 0;
   height: 3rpx;
   background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+}
+
+/* 关键词标签区域 */
+.keywords-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.keyword-tag {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%);
+  border: 1rpx solid rgba(102, 126, 234, 0.5);
+  border-radius: 12rpx;
+  padding: 8rpx 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+}
+
+.keyword-tag text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
 }
 
 .report-header {
@@ -474,4 +578,229 @@ ec-canvas {
   box-shadow:
     0 4rpx 16rpx rgba(240, 147, 251, 0.5),
     inset 0 1rpx 0 rgba(255, 255, 255, 0.3);
+}
+
+/* AI分析报告弹窗 - cover-view 版本（覆盖canvas） */
+.report-modal-cover {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.report-modal-content-cover {
+  width: 100%;
+  max-width: 640rpx;
+  max-height: 80vh;
+  background: #1e293b;
+  border-radius: 32rpx;
+  border: 4rpx solid #667eea;
+  padding: 48rpx 40rpx 40rpx;
+  position: relative;
+  overflow-y: auto;
+}
+
+/* 关闭按钮 */
+.report-close-btn-cover {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
+}
+
+.close-icon {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 300;
+  line-height: 1;
+}
+
+/* 标题 */
+.report-header-cover {
+  margin-bottom: 24rpx;
+  margin-top: 16rpx;
+}
+
+.report-title-cover {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8rpx;
+}
+
+.report-mode-cover {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+/* 关键词 */
+.keywords-section-cover {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.keyword-tag-cover {
+  background: #667eea;
+  border-radius: 12rpx;
+  padding: 8rpx 20rpx;
+  border: 2rpx solid #764ba2;
+}
+
+.keyword-text-cover {
+  font-size: 24rpx;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* 内容区 */
+.report-content-cover {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 24rpx;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.1);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.report-text-cover {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 50rpx;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* 底部 */
+.report-footer-cover {
+  text-align: right;
+  margin-bottom: 24rpx;
+}
+
+.report-time-cover {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 分享按钮 */
+.share-section-cover {
+  margin-top: 24rpx;
+}
+
+.share-btn-cover {
+  width: 100%;
+  height: 88rpx;
+  background: #f093fb;
+  border-radius: 20rpx;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-text-cover {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+/* 保留原有的普通view弹窗样式（非canvas场景） */
+.report-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.report-modal-content {
+  width: 100%;
+  max-width: 640rpx;
+  max-height: 80vh;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+  backdrop-filter: blur(30px);
+  border-radius: 32rpx;
+  border: 2rpx solid rgba(102, 126, 234, 0.4);
+  box-shadow:
+    0 24rpx 80rpx rgba(0, 0, 0, 0.5),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.15);
+  padding: 48rpx 40rpx 40rpx;
+  position: relative;
+  overflow-y: auto;
+  animation: modalSlideUp 0.3s ease;
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(80rpx);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.report-close-btn {
+  position: absolute;
+  top: 24rpx;
+  right: 24rpx;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.report-close-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.9);
+}
+
+.report-close-btn text {
+  font-size: 32rpx;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 300;
+  line-height: 1;
 }

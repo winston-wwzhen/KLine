@@ -2,12 +2,14 @@
 
 ## 功能介绍
 
-本项目集成了智谱AI GLM-4.7大模型，可以根据温度K线数据生成智能分析报告。AI会从技术分析的角度解读天气变化趋势，发现数据中的有趣模式和异常点。
+本项目集成了智谱AI glm-4-flash大模型，可以根据温度K线数据生成智能分析报告。AI会从技术分析的角度解读天气变化趋势，发现数据中的有趣模式和异常点。
 
 **优化后的方案：**
 - 预生成并存储报告到数据库
 - 用户点击时快速读取，响应时间<1秒
 - 节省API调用费用
+- 自动提取3-5个关键词标签
+- 带指数退避重试机制，处理API限流
 
 ## 架构设计
 
@@ -42,18 +44,22 @@
 3. 进入 API Keys 管理页面
 4. 创建新的 API Key 并复制保存
 
-### 2. 配置云函数环境变量
+### 2. 配置云函数
 
-在微信开发者工具中：
+在云函数目录下配置 `config.js`：
 
-1. 打开云开发控制台
-2. 进入「云函数」管理
-3. 找到 `analyze-kline` 云函数
-4. 点击「详情」→「配置」
-5. 在「环境变量」中添加：
-   - 键名：`GLM_API_KEY`
-   - 值：你的智谱API Key（格式如：`id.secret`）
-6. 保存并重新部署云函数
+1. 复制配置模板：
+   ```bash
+   cp cloudfunctions/analyze-kline/config.example.js cloudfunctions/analyze-kline/config.js
+   ```
+
+2. 编辑 `config.js`，填入你的配置：
+   ```javascript
+   const GLM_CONFIG = {
+     API_KEY: 'your_glm_api_key_here',  // 从 https://open.bigmodel.cn/ 获取
+     MODEL: 'glm-4-flash',  // 可选: glm-4, glm-4-plus, glm-4-air
+   };
+   ```
 
 ### 3. 部署云函数
 
@@ -74,8 +80,9 @@
 
 **重要提示：**
 - 首次使用或数据更新后需要重新生成
-- 批量生成会产生API费用（约186份报告）
+- 批量生成会产生API费用（约155份报告：31城市×5模式）
 - 生成过程可以中断，已生成的报告会保存
+- 云函数带重试机制，会自动处理API限流
 
 ## 使用说明
 
@@ -95,10 +102,10 @@
 ## 费用说明
 
 **一次性费用：**
-- 共31个城市 × 6个模式 = 186份报告
+- 共31个城市 × 5个模式 = 155份报告
 - 每份报告约消耗 300-500 tokens
-- GLM-4.7 定价：¥0.5/百万tokens（输入）
-- **预估总费用：¥0.3-0.5元**
+- glm-4-flash 定价：¥0.1/百万tokens（输入）
+- **预估总费用：¥0.05-0.1元**
 
 **后续使用：**
 - 用户查看报告直接从数据库读取
@@ -136,6 +143,7 @@ A: 在云开发控制台修改环境变量后重新部署云函数即可。
   cityName: "北京",        // 城市中文名称
   mode: "original",        // 模式值
   report: "报告内容...",   // AI生成的报告
+  keywords: ["温差大", "四季分明", "穿衣困难"],  // 关键词标签
   createTime: ISODate,     // 创建时间
   updateTime: ISODate      // 更新时间
 }
@@ -192,4 +200,10 @@ wx.cloud.callFunction({
 ## API参考
 
 - 智谱AI文档：https://docs.bigmodel.cn/
-- GLM-4.7模型：https://open.bigmodel.cn/dev/api
+- glm-4-flash模型：https://open.bigmodel.cn/dev/api
+
+**可用模型：**
+- `glm-4-flash` - 最快最便宜（推荐）⚡
+- `glm-4-air` - 性价比高
+- `glm-4` - 标准版
+- `glm-4-plus` - 最强大

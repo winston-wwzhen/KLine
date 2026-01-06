@@ -61,6 +61,9 @@
             <text class="report-city">{{item.cityName}}</text>
             <text class="report-mode">{{item.modeLabel}}</text>
           </view>
+          <view wx:if="{{item.keywords.length > 0}}" class="report-keywords">
+            <text class="keyword-mini" wx:for="{{item.keywords}}" wx:for-item="keyword" wx:key="index">{{keyword}}</text>
+          </view>
           <text class="report-time">{{item.time}}</text>
         </view>
       </view>

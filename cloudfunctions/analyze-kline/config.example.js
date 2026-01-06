@@ -14,8 +14,8 @@ const CLOUD_ENV_ID = 'your_cloud_env_id_here';
 const GLM_CONFIG = {
   API_URL: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
   API_KEY: 'your_glm_api_key_here',  // 从 https://open.bigmodel.cn/ 获取
-  MODEL: 'GLM-4.5-AirX',
-  // API调用配置
+  MODEL: 'glm-4-flash',  // 使用glm-4-flash模型（性价比高，速度快）
+  // 其他可用模型: glm-4, glm-4-plus, glm-4-air
   TIMEOUT: 30000, // 30秒超时
   MAX_RETRIES: 3,  // 最大重试次数
 };

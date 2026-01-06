@@ -1,6 +1,15 @@
 <!-- components/kline-chart-native/kline-chart-native.wxml -->
 <view class="kline-chart-container">
+  <!-- 空数据提示 -->
+  <view wx:if="{{isEmpty}}" class="empty-state">
+    <text class="empty-icon">📊</text>
+    <text class="empty-text">暂无数据</text>
+    <text class="empty-hint">请选择城市和显示模式</text>
+  </view>
+
+  <!-- K线图Canvas -->
   <canvas
+    wx:else
     type="2d"
     id="kline-canvas"
     class="kline-canvas"

@@ -41,7 +41,8 @@ Page({
         const reports = res.result.reports.map(r => ({
           cityName: r.cityName,
           modeLabel: DISPLAY_MODES.find(m => m.value === r.mode)?.label || r.mode,
-          time: this.formatDate(r.updateTime || r.createTime)
+          time: this.formatDate(r.updateTime || r.createTime),
+          keywords: r.keywords || []
         }));
 
         this.setData({
@@ -193,38 +194,171 @@ Page({
   },
 
   /**
-   * 简单的周K线聚合（用于管理页面）
+   * 周K线聚合（支持所有6种显示模式）
    */
   aggregateToWeekly(dailyData, mode) {
     if (!dailyData || dailyData.length === 0) return [];
 
     const weekMap = new Map();
 
+    // 先收集所有数据按周分组
     dailyData.forEach(day => {
       const weekNum = this.getWeekNumber(day.date);
       if (!weekMap.has(weekNum)) {
         weekMap.set(weekNum, {
           dates: [],
           tempMaxList: [],
-          tempMinList: []
+          tempMinList: [],
+          ranges: [],
+          avgTemps: []
         });
       }
       const weekData = weekMap.get(weekNum);
       weekData.dates.push(day.date);
       weekData.tempMaxList.push(day.tempMax);
       weekData.tempMinList.push(day.tempMin);
+      weekData.ranges.push(day.tempMax - day.tempMin);
+      weekData.avgTemps.push((day.tempMax + day.tempMin) / 2);
     });
+
+    // 计算全年统计量（用于某些模式）
+    const allAvgTemps = [];
+    dailyData.forEach(day => {
+      allAvgTemps.push((day.tempMax + day.tempMin) / 2);
+    });
+    const yearlyAvg = allAvgTemps.reduce((a, b) => a + b, 0) / allAvgTemps.length;
+    const yearlyStd = Math.sqrt(
+      allAvgTemps.reduce((sum, t) => sum + Math.pow(t - yearlyAvg, 2), 0) / allAvgTemps.length
+    );
+
+    // 先生成基础周数据
+    const baseWeeklyData = [];
+    weekMap.forEach((value, weekNum) => {
+      const weekAvg = (Math.max(...value.tempMaxList) + Math.min(...value.tempMinList)) / 2;
+      baseWeeklyData.push({
+        week: weekNum,
+        dates: value.dates,
+        tempMaxList: value.tempMaxList,
+        tempMinList: value.tempMinList,
+        ranges: value.ranges,
+        weekAvg: weekAvg
+      });
+    });
+
+    baseWeeklyData.sort((a, b) => a.week.localeCompare(b.week));
 
     const weeklyData = [];
     weekMap.forEach((value, weekNum) => {
-      const { dates, tempMaxList, tempMinList } = value;
+      const dates = value.dates;
+      const tempMaxList = value.tempMaxList;
+      const tempMinList = value.tempMinList;
+      const ranges = value.ranges;
+
+      let open, close, high, low;
+
+      switch (mode) {
+        case 'zscore':
+          // Z-score标准化：(温度-均值)/标准差，突出异常周
+          const weekZScores = tempMaxList.map(t => (t - yearlyAvg) / yearlyStd);
+          const weekMinZScores = tempMinList.map(t => (t - yearlyAvg) / yearlyStd);
+          open = weekZScores[0];
+          close = weekZScores[weekZScores.length - 1];
+          high = Math.max(...weekZScores);
+          low = Math.min(...weekMinZScores);
+          break;
+
+        case 'weekChange':
+          // 环比变化率：(本周-上周)/上周 * 100
+          const currentWeekAvg = (Math.max(...tempMaxList) + Math.min(...tempMinList)) / 2;
+          const currentIndex = baseWeeklyData.findIndex(d => d.week === weekNum);
+          if (currentIndex > 0) {
+            const prevWeekAvg = baseWeeklyData[currentIndex - 1].weekAvg;
+            const changeRate = ((currentWeekAvg - prevWeekAvg) / prevWeekAvg) * 100;
+
+            const weekAvgList = dates.map((_, i) =>
+              (tempMaxList[i] + tempMinList[i]) / 2
+            );
+            const firstDayAvg = weekAvgList[0];
+            const lastDayAvg = weekAvgList[weekAvgList.length - 1];
+            open = ((firstDayAvg - prevWeekAvg) / prevWeekAvg) * 100;
+            close = ((lastDayAvg - prevWeekAvg) / prevWeekAvg) * 100;
+            high = changeRate + 2;
+            low = changeRate - 2;
+          } else {
+            open = 0;
+            close = 0;
+            high = 5;
+            low = -5;
+          }
+          break;
+
+        case 'cumulative':
+          // 累积距平：累积每周与均值的偏差
+          const cumIndex = baseWeeklyData.findIndex(d => d.week === weekNum);
+          let cumulativeSum = 0;
+          for (let i = 0; i <= cumIndex; i++) {
+            const w = baseWeeklyData[i];
+            cumulativeSum += w.weekAvg - yearlyAvg;
+          }
+
+          const weekCumStart = cumIndex > 0 ?
+            (cumulativeSum - (baseWeeklyData[cumIndex].weekAvg - yearlyAvg)) : 0;
+          open = weekCumStart;
+          close = cumulativeSum;
+          high = cumulativeSum + 2;
+          low = weekCumStart - 1;
+          break;
+
+        case 'acceleration':
+          // 温度加速度：二阶导数，变化的变化率
+          const accIndex = baseWeeklyData.findIndex(d => d.week === weekNum);
+
+          if (accIndex >= 2) {
+            const prevWeek2 = baseWeeklyData[accIndex - 2].weekAvg;
+            const prevWeek1 = baseWeeklyData[accIndex - 1].weekAvg;
+            const currWeek = baseWeeklyData[accIndex].weekAvg;
+
+            const firstChange = prevWeek1 - prevWeek2;
+            const secondChange = currWeek - prevWeek1;
+            const acceleration = secondChange - firstChange;
+
+            open = firstChange;
+            close = secondChange;
+            high = acceleration > 0 ? Math.max(firstChange, secondChange) + Math.abs(acceleration) : Math.max(firstChange, secondChange) + 2;
+            low = acceleration < 0 ? Math.min(firstChange, secondChange) - Math.abs(acceleration) : Math.min(firstChange, secondChange) - 2;
+          } else {
+            open = 0;
+            close = 0;
+            high = 5;
+            low = -5;
+          }
+          break;
+
+        case 'range':
+          // 昼夜温差模式
+          open = ranges[0];
+          close = ranges[ranges.length - 1];
+          high = Math.max(...ranges);
+          low = Math.min(...ranges);
+          break;
+
+        case 'original':
+        default:
+          // 原始温度模式
+          open = tempMinList[0];
+          close = tempMinList[tempMinList.length - 1];
+          high = Math.max(...tempMaxList);
+          low = Math.min(...tempMinList);
+          break;
+      }
+
       weeklyData.push({
         week: weekNum,
         date: dates[0],
-        open: tempMinList[0],
-        close: tempMinList[tempMinList.length - 1],
-        high: Math.max(...tempMaxList),
-        low: Math.min(...tempMinList)
+        open,
+        close,
+        high,
+        low
       });
     });
 

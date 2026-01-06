@@ -20,6 +20,16 @@ Page({
     modeDesc: '',
     // K线数据
     klineData: [],
+    // 数据统计
+    stats: {
+      ups: 0,
+      downs: 0,
+      maxHigh: 0,
+      minLow: 0,
+      avgChange: 0,
+      totalWeeks: 0,
+      dateRange: ''
+    },
     // 加载状态
     loading: false,
     // 错误信息
@@ -27,7 +37,9 @@ Page({
     // AI分析状态
     analyzing: false,
     analysisReport: '',
-    reportTime: ''
+    reportKeywords: [],
+    reportTime: '',
+    showReportModal: false
   },
 
   onLoad() {
@@ -49,16 +61,23 @@ Page({
     this.setData({
       loading: true,
       errorMsg: '',
-      analysisReport: ''  // 清除旧的报告
+      analysisReport: '',
+      showReportModal: false  // 关闭弹窗
     });
 
     getKlineData(city).then(result => {
       const dailyData = result.data || result;
       // 根据显示模式聚合成周K线
       const weeklyData = this.aggregateToWeekly(dailyData, this.data.displayMode);
+      // 计算统计数据
+      const stats = this.calculateStats(weeklyData);
       this.setData({
         klineData: weeklyData,
-        loading: false
+        stats: stats,
+        loading: false,
+        analysisReport: '',
+        reportKeywords: [],
+        showReportModal: false
       });
     }).catch(err => {
       console.error('获取数据失败:', err);
@@ -283,6 +302,55 @@ Page({
   },
 
   /**
+   * 计算统计数据
+   */
+  calculateStats(data) {
+    if (!data || data.length === 0) {
+      return {
+        ups: 0,
+        downs: 0,
+        maxHigh: 0,
+        minLow: 0,
+        avgChange: 0,
+        totalWeeks: 0,
+        dateRange: ''
+      };
+    }
+
+    const ups = data.filter(k => k.close > k.open).length;
+    const downs = data.filter(k => k.close < k.open).length;
+    const maxHigh = Math.max(...data.map(k => k.high));
+    const minLow = Math.min(...data.map(k => k.low));
+    const avgChange = data.reduce((sum, k) => sum + (k.close - k.open), 0) / data.length;
+
+    // 获取模式配置以确定单位
+    const modeConfig = {
+      'original': '°C',
+      'zscore': 'σ',
+      'weekChange': '%',
+      'range': '°C',
+      'cumulative': '°C',
+      'acceleration': '°C'
+    };
+    const unit = modeConfig[this.data.displayMode] || '';
+
+    // 格式化时间范围
+    const startDate = new Date(data[0].date);
+    const endDate = new Date(data[data.length - 1].date);
+    const dateRange = `${startDate.getFullYear()}/${startDate.getMonth() + 1}/${startDate.getDate()} - ${endDate.getFullYear()}/${endDate.getMonth() + 1}/${endDate.getDate()}`;
+
+    return {
+      ups: ups,
+      downs: downs,
+      maxHigh: maxHigh.toFixed(1) + unit,
+      minLow: minLow.toFixed(1) + unit,
+      avgChange: avgChange.toFixed(2) + unit,
+      totalWeeks: data.length,
+      dateRange: dateRange
+    };
+  },
+
+  /**
    * 城市选择变化
    */
   onCityChange(e) {
@@ -305,7 +373,9 @@ Page({
       displayMode: mode.value,
       displayModeLabel: mode.label,
       modeDesc: mode.desc,
-      analysisReport: ''  // 清除旧的报告
+      analysisReport: '',
+      reportKeywords: [],
+      showReportModal: false  // 关闭弹窗
     });
     // 重新加载数据
     this.loadKlineData(this.data.selectedCity);
@@ -325,7 +395,7 @@ Page({
    * 生成AI分析报告
    */
   onGenerateReport() {
-    const { selectedCity, selectedCityName, displayMode, analyzing } = this.data;
+    const { selectedCity, displayMode, analyzing } = this.data;
 
     if (analyzing) return;
 
@@ -347,23 +417,17 @@ Page({
       wx.hideLoading();
 
       if (res.result.success) {
-        // 从数据库获取成功，显示报告
+        // 从数据库获取成功，显示弹窗
         const timestamp = new Date(res.result.timestamp);
         const timeStr = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}`;
 
         this.setData({
           analysisReport: res.result.report,
+          reportKeywords: res.result.keywords || [],
           reportTime: timeStr,
-          analyzing: false
+          analyzing: false,
+          showReportModal: true
         });
-
-        // 滚动到报告区域
-        setTimeout(() => {
-          wx.pageScrollTo({
-            selector: '.report-card',
-            duration: 300
-          });
-        }, 100);
       } else {
         // 数据库中没有报告
         this.setData({ analyzing: false });
@@ -385,6 +449,22 @@ Page({
         duration: 2000
       });
     });
+  },
+
+  /**
+   * 关闭报告弹窗
+   */
+  onCloseReport() {
+    this.setData({
+      showReportModal: false
+    });
+  },
+
+  /**
+   * 阻止点击冒泡
+   */
+  onStopPropagation() {
+    // 阻止事件冒泡，避免点击弹窗内容时关闭弹窗
   },
 
   /**
