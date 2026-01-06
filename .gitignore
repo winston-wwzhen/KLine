@@ -2,6 +2,7 @@
 miniprogram/.DS_Store
 miniprogram/miniprogram_npm/
 miniprogram/node_modules/
+miniprogram/cloud.config.js
 
 # 云函数
 cloudfunctions/**/node_modules/

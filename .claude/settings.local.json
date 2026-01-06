@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git -C D:/KLine branch)"
+      "Bash(git -C D:/KLine branch)",
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(cat:*)"
     ]
   }
 }

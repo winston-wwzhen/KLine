@@ -1,5 +1,5 @@
 {
-  "appid": "touristappid",
+  "appid": "wx31908c6f5373227e",
   "compileType": "miniprogram",
   "libVersion": "3.5.5",
   "projectname": "weather-kline",
@@ -18,6 +18,28 @@
     "enhance": true,
     "postcss": true,
     "minified": true,
-    "useCompilerPlugins": []
+    "useCompilerPlugins": [],
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
   }
 }
