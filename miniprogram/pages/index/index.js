@@ -471,6 +471,10 @@ Page({
     let keywords = [];
     let cleanReport = report;
 
+    // 先清理常见的 markdown 代码块标记
+    cleanReport = cleanReport.replace(/```json\s*/g, '');
+    cleanReport = cleanReport.replace(/```\s*/g, '');
+
     // 尝试多种模式查找 JSON 数组
     // 模式1: 开头的 JSON 数组
     let match = cleanReport.match(/^\s*\[[\s\S]*?\]\s*(?:\n|$)/);
@@ -503,12 +507,15 @@ Page({
         keywords = JSON.parse(match[0]);
         // 从报告中移除关键词部分
         cleanReport = cleanReport.replace(match[0], '').trim();
-        // 移除分隔符
-        cleanReport = cleanReport.replace(/^[-=*]{3,}\s*\n?/, '').trim();
+        // 移除各种分隔符（---, ===, ***, 等）- 全局匹配
+        cleanReport = cleanReport.replace(/^[-=*]{3,}\s*\n?/gm, '');
       } catch (e) {
         console.warn('解析关键词失败:', e);
       }
     }
+
+    // 最后清理：移除多余空行（3个或更多连续换行符替换为2个）
+    cleanReport = cleanReport.trim().replace(/\n{3,}/g, '\n\n');
 
     return { keywords, cleanReport };
   },

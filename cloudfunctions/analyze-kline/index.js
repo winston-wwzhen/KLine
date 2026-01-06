@@ -24,6 +24,10 @@ function parseAIResponse(response) {
     let keywords = [];
     let report = response.trim();
 
+    // 先清理常见的 markdown 代码块标记
+    report = report.replace(/```json\s*/g, '');
+    report = report.replace(/```\s*/g, '');
+
     // 尝试多种模式查找 JSON 数组
     // 模式1: 开头的 JSON 数组
     let match = report.match(/^\s*\[[\s\S]*?\]\s*(?:\n|$)/);
@@ -61,8 +65,8 @@ function parseAIResponse(response) {
         // 移除匹配到的 JSON 及其前后的空行
         report = report.replace(match[0], '').trim();
 
-        // 移除可能存在的分隔符（如 ---, ===, *** 等）
-        report = report.replace(/^[-=*]{3,}\s*\n?/, '').trim();
+        // 移除可能存在的分隔符（如 ---, ===, *** 等）- 全局匹配
+        report = report.replace(/^[-=*]{3,}\s*\n?/gm, '');
 
         // 移除开头的空行
         report = report.replace(/^\s+/, '');
@@ -73,6 +77,9 @@ function parseAIResponse(response) {
     } else {
       console.log("未找到关键词JSON数组，使用原始响应");
     }
+
+    // 最后清理：移除多余空行（3个或更多连续换行符替换为2个）
+    report = report.trim().replace(/\n{3,}/g, '\n\n');
 
     return { keywords, report };
   } catch (error) {

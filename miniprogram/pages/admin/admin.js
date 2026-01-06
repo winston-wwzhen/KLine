@@ -400,16 +400,21 @@ Page({
     if (!report) return [];
 
     let keywords = [];
+    let cleanReport = report;
+
+    // 先清理常见的 markdown 代码块标记
+    cleanReport = cleanReport.replace(/```json\s*/g, '');
+    cleanReport = cleanReport.replace(/```\s*/g, '');
 
     // 尝试多种模式查找 JSON 数组
-    let match = report.match(/^\s*\[[\s\S]*?\]\s*(?:\n|$)/);
+    let match = cleanReport.match(/^\s*\[[\s\S]*?\]\s*(?:\n|$)/);
 
     if (!match) {
-      match = report.match(/\[("[^"]*",?\s*)+\]/);
+      match = cleanReport.match(/\[("[^"]*",?\s*)+\]/);
     }
 
     if (!match) {
-      const jsonMatches = report.match(/\[[^\]]*\]/g);
+      const jsonMatches = cleanReport.match(/\[[^\]]*\]/g);
       if (jsonMatches) {
         for (const m of jsonMatches) {
           try {
