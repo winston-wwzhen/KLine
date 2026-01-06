@@ -1,0 +1,12 @@
+/* components/kline-chart-native/kline-chart-native.wxss */
+.kline-chart-container {
+  width: 100%;
+  height: 500rpx;
+  margin-top: 20rpx;
+  background-color: #fff;
+}
+
+.kline-canvas {
+  width: 100%;
+  height: 100%;
+}

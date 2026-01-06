@@ -22,7 +22,7 @@
 
   <!-- K线图容器 -->
   <view wx:if="{{!loading && !errorMsg}}" class="chart-container">
-    <ec-canvas id="mychart-dom-kline" canvas-id="mychart-kline" ec="{{ ec }}"></ec-canvas>
+    <kline-chart klineData="{{klineData}}"></kline-chart>
   </view>
 
   <!-- 图例说明 -->

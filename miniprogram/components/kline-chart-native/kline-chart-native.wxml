@@ -1,0 +1,8 @@
+<!-- components/kline-chart-native/kline-chart-native.wxml -->
+<view class="kline-chart-container">
+  <canvas
+    type="2d"
+    id="kline-canvas"
+    class="kline-canvas"
+  ></canvas>
+</view>

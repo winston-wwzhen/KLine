@@ -1,6 +1,6 @@
 {
   "usingComponents": {
-    "ec-canvas": "../../lib/ec-canvas/ec-canvas"
+    "kline-chart": "../../components/kline-chart-native/kline-chart-native"
   },
   "navigationBarTitleText": "天气K线图",
   "enablePullDownRefresh": true
