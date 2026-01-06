@@ -1,7 +1,11 @@
 /**
  * sync-weather 云函数
  * 从 Open-Meteo API 获取天气数据并写入云数据库
- * 用于初始化数据，手动调用一次即可
+ * 支持分批同步，避免超时
+ *
+ * 参数:
+ * - startIndex: 开始索引（默认0）
+ * - count: 同步城市数量（默认3）
  */
 const cloud = require('wx-server-sdk');
 const request = require('request-promise');
@@ -55,11 +59,8 @@ const OPEN_METEO_BASE_URL = 'https://archive-api.open-meteo.com/v1/archive';
 const DATE_START = '2025-01-01';
 const DATE_END = '2026-01-06';
 
-/**
- * 从 Open-Meteo API 获取指定城市的天气数据
- */
 async function fetchWeatherData(city) {
-  const url = `${OPEN_METEO_BASE_URL}?latitude=${city.lat}&longitude=${city.lon}&start_date=${DATE_START}&end_date=${DATE_END}&daily=temperature_2m_max,temperature_2m_min&timezone=auto`;
+  const url = OPEN_METEO_BASE_URL + '?latitude=' + city.lat + '&longitude=' + city.lon + '&start_date=' + DATE_START + '&end_date=' + DATE_END + '&daily=temperature_2m_max,temperature_2m_min&timezone=auto';
 
   try {
     const response = await request({
@@ -70,14 +71,11 @@ async function fetchWeatherData(city) {
 
     return response;
   } catch (err) {
-    console.error(`获取 ${city.name} 数据失败:`, err);
+    console.error('获取 ' + city.name + ' 数据失败:', err);
     throw err;
   }
 }
 
-/**
- * 将天气数据转换为数据库记录格式
- */
 function transformWeatherData(city, weatherData) {
   const daily = weatherData.daily;
   const records = [];
@@ -100,13 +98,11 @@ function transformWeatherData(city, weatherData) {
   return records;
 }
 
-/**
- * 逐条写入数据库（微信云数据库的限制）
- */
 async function insertRecords(records) {
   let count = 0;
 
-  for (const record of records) {
+  for (let i = 0; i < records.length; i++) {
+    const record = records[i];
     try {
       await db.collection('weather_data').add({
         data: record
@@ -117,43 +113,47 @@ async function insertRecords(records) {
       throw err;
     }
 
-    // 每50条记录输出一次进度
     if (count % 50 === 0) {
-      console.log(`已插入 ${count}/${records.length} 条记录`);
+      console.log('已插入 ' + count + '/' + records.length + ' 条记录');
     }
   }
 
-  console.log(`共插入 ${count} 条记录`);
+  console.log('共插入 ' + count + ' 条记录');
   return count;
 }
 
 exports.main = async (event, context) => {
+  const startIndex = event.startIndex || 0;
+  const count = event.count || 3;
+  
+  const endIndex = Math.min(startIndex + count, PROVINCE_CAPITALS.length);
+  const cities = PROVINCE_CAPITALS.slice(startIndex, endIndex);
+  
   let successCount = 0;
   let failCount = 0;
   const errors = [];
 
-  console.log('开始同步天气数据...');
-  console.log(`总计城市: ${PROVINCE_CAPITALS.length}`);
+  console.log('=== 天气数据同步 ===');
+  console.log('同步范围: 第 ' + (startIndex + 1) + '-' + endIndex + ' 个城市');
+  console.log('本批城市: ' + cities.map(function(c) { return c.name; }).join(', '));
+  console.log('总计城市: ' + PROVINCE_CAPITALS.length);
 
-  for (const city of PROVINCE_CAPITALS) {
+  for (let i = 0; i < cities.length; i++) {
+    const city = cities[i];
     try {
-      console.log(`\n正在处理 ${city.name} (${city.en})...`);
+      console.log('\n正在处理 ' + city.name + ' (' + city.en + ')...');
 
-      // 1. 从 Open-Meteo API 获取数据
       const weatherData = await fetchWeatherData(city);
-
-      // 2. 转换数据格式
       const records = transformWeatherData(city, weatherData);
-      console.log(`获取到 ${records.length} 条数据`);
+      console.log('获取到 ' + records.length + ' 条数据');
 
-      // 3. 写入云数据库
       await insertRecords(records);
 
-      console.log(`${city.name} 数据同步成功`);
+      console.log(city.name + ' 数据同步成功');
       successCount++;
 
     } catch (err) {
-      console.error(`${city.name} 数据同步失败:`, err);
+      console.error(city.name + ' 数据同步失败:', err);
       failCount++;
       errors.push({
         city: city.name,
@@ -162,18 +162,27 @@ exports.main = async (event, context) => {
     }
   }
 
-  console.log('\n=== 同步完成 ===');
-  console.log(`总计: ${PROVINCE_CAPITALS.length}`);
-  console.log(`成功: ${successCount}`);
-  console.log(`失败: ${failCount}`);
+  const progress = Math.round((endIndex / PROVINCE_CAPITALS.length) * 100);
+
+  console.log('\n=== 本批同步完成 ===');
+  console.log('成功: ' + successCount);
+  console.log('失败: ' + failCount);
+  console.log('总进度: ' + progress + '% (' + endIndex + '/' + PROVINCE_CAPITALS.length + ')');
 
   return {
     success: true,
-    summary: {
+    batch: {
+      startIndex: startIndex,
+      endIndex: endIndex,
       total: PROVINCE_CAPITALS.length,
-      successCount,
-      failCount
+      progress: progress + '%'
     },
-    errors
+    summary: {
+      total: cities.length,
+      successCount: successCount,
+      failCount: failCount
+    },
+    nextStartIndex: endIndex < PROVINCE_CAPITALS.length ? endIndex : null,
+    errors: errors
   };
 };
