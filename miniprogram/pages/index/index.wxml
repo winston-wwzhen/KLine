@@ -1,13 +1,33 @@
 <!--pages/index/index.wxml-->
 <view class="container">
-  <!-- 城市选择器 -->
-  <view class="city-selector">
-    <picker mode="selector" range="{{cities}}" range-key="name" bindchange="onCityChange">
-      <view class="picker">
-        <text class="city-name">{{selectedCityName}}</text>
-        <text class="arrow">▼</text>
+  <!-- 选择器区域 -->
+  <view class="selectors-section">
+    <view class="selectors-row">
+      <!-- 城市选择器 -->
+      <view class="city-selector">
+        <picker mode="selector" range="{{cities}}" range-key="name" bindchange="onCityChange">
+          <view class="picker">
+            <text class="label">城市</text>
+            <text class="city-name">{{selectedCityName}}</text>
+          </view>
+        </picker>
       </view>
-    </picker>
+
+      <!-- 显示模式选择器 -->
+      <view class="mode-selector">
+        <picker mode="selector" range="{{displayModes}}" range-key="label" bindchange="onModeChange">
+          <view class="picker">
+            <text class="label">模式</text>
+            <text class="mode-label">{{displayModeLabel}}</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+  </view>
+
+  <!-- 模式说明 -->
+  <view class="mode-desc-card">
+    <text class="mode-desc-text">{{modeDesc}}</text>
   </view>
 
   <!-- 加载状态 -->
@@ -22,18 +42,46 @@
 
   <!-- K线图容器 -->
   <view wx:if="{{!loading && !errorMsg}}" class="chart-container">
-    <kline-chart klineData="{{klineData}}"></kline-chart>
+    <kline-chart klineData="{{klineData}}" displayMode="{{displayMode}}"></kline-chart>
   </view>
 
   <!-- 图例说明 -->
   <view class="legend">
     <view class="legend-item">
       <view class="color-box up"></view>
-      <text>红涨（周日&gt;周一）</text>
+      <text>红色：上涨</text>
     </view>
     <view class="legend-item">
       <view class="color-box down"></view>
-      <text>绿跌（周日&lt;周一）</text>
+      <text>绿色：下跌</text>
+    </view>
+  </view>
+
+  <!-- AI分析按钮 -->
+  <view wx:if="{{!loading && !errorMsg && klineData.length > 0}}" class="analyze-section">
+    <button class="analyze-btn" bindtap="onGenerateReport" disabled="{{analyzing}}">
+      <text wx:if="{{!analyzing}}">✨ AI生成分析报告</text>
+      <text wx:else="{{analyzing}}">🤖 分析中...</text>
+    </button>
+  </view>
+
+  <!-- AI分析报告 -->
+  <view wx:if="{{analysisReport}}" class="report-card">
+    <view class="report-header">
+      <text class="report-title">📊 {{selectedCityName}}年度温度K线分析报告</text>
+      <text class="report-mode">{{displayModeLabel}}模式</text>
+    </view>
+    <view class="report-content">
+      <text class="report-text">{{analysisReport}}</text>
+    </view>
+    <view class="report-footer">
+      <text class="report-time">生成时间：{{reportTime}}</text>
+    </view>
+    <!-- 分享按钮 -->
+    <view class="share-section">
+      <button class="share-btn" bindtap="onShareReport" open-type="share">
+        <text>📱 分享给好友</text>
+      </button>
     </view>
   </view>
 </view>

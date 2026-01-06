@@ -1,7 +1,9 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/admin/sync/sync"
+    "pages/admin/sync/sync",
+    "pages/admin/debug/debug",
+    "pages/admin/admin"
   ],
   "window": {
     "backgroundTextStyle": "light",

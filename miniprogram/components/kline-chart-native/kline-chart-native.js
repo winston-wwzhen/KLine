@@ -6,6 +6,10 @@ Component({
     klineData: {
       type: Array,
       value: []
+    },
+    displayMode: {
+      type: String,
+      value: 'original'
     }
   },
 
@@ -23,6 +27,21 @@ Component({
   },
 
   methods: {
+    /**
+     * 获取模式配置
+     */
+    getModeConfig(mode) {
+      const configs = {
+        'original': { title: '天气周K线图 (原始温度)', unit: '°C' },
+        'zscore': { title: '天气周K线图 (Z-score标准化)', unit: 'σ' },
+        'weekChange': { title: '天气周K线图 (环比变化率)', unit: '%' },
+        'range': { title: '天气周K线图 (昼夜温差)', unit: '°C' },
+        'cumulative': { title: '天气周K线图 (累积距平)', unit: '°C' },
+        'acceleration': { title: '天气周K线图 (温度加速度)', unit: '°C' }
+      };
+      return configs[mode] || configs['original'];
+    },
+
     /**
      * 绘制 K 线图
      */
@@ -67,6 +86,9 @@ Component({
       const chartWidth = width - padding.left - padding.right;
       const chartHeight = height - padding.top - padding.bottom;
 
+      // 获取模式配置
+      const modeConfig = this.getModeConfig(this.data.displayMode);
+
       // 计算极值
       let minPrice = Infinity;
       let maxPrice = -Infinity;
@@ -85,7 +107,7 @@ Component({
       this.drawGrid(ctx, width, height, padding);
 
       // 绘制坐标轴
-      this.drawAxes(ctx, width, height, padding, data, minPrice, maxPrice);
+      this.drawAxes(ctx, width, height, padding, data, minPrice, maxPrice, modeConfig.unit);
 
       // 绘制 K 线
       const candleWidth = chartWidth / data.length * 0.6;
@@ -129,7 +151,7 @@ Component({
       ctx.fillStyle = '#333';
       ctx.font = 'bold 14px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('天气周K线图', width / 2, 20);
+      ctx.fillText(modeConfig.title, width / 2, 20);
     },
 
     /**
@@ -161,8 +183,23 @@ Component({
     /**
      * 绘制坐标轴
      */
-    drawAxes(ctx, width, height, padding, data, minPrice, maxPrice) {
+    drawAxes(ctx, width, height, padding, data, minPrice, maxPrice, unit) {
       const chartHeight = height - padding.top - padding.bottom;
+      const chartWidth = width - padding.left - padding.right;
+
+      // 绘制Y轴线条
+      ctx.strokeStyle = '#999';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, padding.top);
+      ctx.lineTo(padding.left, height - padding.bottom);
+      ctx.stroke();
+
+      // 绘制X轴线条
+      ctx.beginPath();
+      ctx.moveTo(padding.left, height - padding.bottom);
+      ctx.lineTo(width - padding.right, height - padding.bottom);
+      ctx.stroke();
 
       // Y轴刻度
       ctx.fillStyle = '#666';
@@ -173,7 +210,7 @@ Component({
       for (let i = 0; i <= 5; i++) {
         const value = minPrice + (maxPrice - minPrice) * (1 - i / 5);
         const y = padding.top + chartHeight * i / 5;
-        ctx.fillText(value.toFixed(0) + '°C', padding.left - 5, y);
+        ctx.fillText(value.toFixed(1) + unit, padding.left - 5, y);
       }
 
       // X轴刻度（每7个显示一个）
@@ -181,7 +218,7 @@ Component({
       ctx.textBaseline = 'top';
 
       for (let i = 0; i < data.length; i += 7) {
-        const x = padding.left + (width - padding.left - padding.right) * i / data.length + (width - padding.left - padding.right) / data.length / 2;
+        const x = padding.left + chartWidth * i / data.length + chartWidth / data.length / 2;
         const date = new Date(data[i].date);
         const label = `${date.getMonth() + 1}/${date.getDate()}`;
         ctx.fillText(label, x, height - padding.bottom + 5);

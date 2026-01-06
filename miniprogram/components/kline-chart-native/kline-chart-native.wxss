@@ -1,12 +1,14 @@
 /* components/kline-chart-native/kline-chart-native.wxss */
 .kline-chart-container {
   width: 100%;
-  height: 500rpx;
-  margin-top: 20rpx;
-  background-color: #fff;
+  height: 100%;
+  position: relative;
+  background-color: #ffffff;
+  border-radius: 16rpx;
 }
 
 .kline-canvas {
   width: 100%;
   height: 100%;
+  display: block;
 }

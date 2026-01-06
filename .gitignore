@@ -1,3 +1,8 @@
+# 环境变量
+.env
+.env.local
+.env.*.local
+
 # 微信小程序
 miniprogram/.DS_Store
 miniprogram/miniprogram_npm/
@@ -7,6 +12,7 @@ miniprogram/cloud.config.js
 # 云函数
 cloudfunctions/**/node_modules/
 cloudfunctions/**/.DS_Store
+cloudfunctions/**/config.js
 
 # IDE
 .idea/

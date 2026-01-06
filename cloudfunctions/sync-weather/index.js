@@ -9,6 +9,7 @@
  */
 const cloud = require('wx-server-sdk');
 const request = require('request-promise');
+const { DB_CONFIG } = require('./config.js');
 
 // 初始化 cloud
 cloud.init({
@@ -104,7 +105,7 @@ async function insertRecords(records) {
   for (let i = 0; i < records.length; i++) {
     const record = records[i];
     try {
-      await db.collection('weather_data').add({
+      await db.collection(DB_CONFIG.WEATHER_COLLECTION).add({
         data: record
       });
       count++;

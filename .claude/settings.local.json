@@ -8,7 +8,9 @@
       "Bash(git push:*)",
       "Bash(cat:*)",
       "Bash(git filter-branch:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(ls:*)",
+      "Bash(git reset:*)"
     ]
   }
 }

@@ -5,8 +5,8 @@
     "miniprogram": {
       "list": [
         {
-          "name": "pages/admin/sync/sync",
-          "pathName": "pages/admin/sync/sync",
+          "name": "/pages/admin/admin",
+          "pathName": "pages/admin/admin",
           "query": "",
           "scene": null,
           "launchMode": "default"

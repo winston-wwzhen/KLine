@@ -12,15 +12,32 @@ Page({
     // 当前选中城市
     selectedCity: config.KLINE_CONFIG.DEFAULT_CITY,
     selectedCityName: config.KLINE_CONFIG.DEFAULT_CITY_NAME,
+    // 显示模式列表
+    displayModes: config.DISPLAY_MODES,
+    // 当前显示模式
+    displayMode: config.KLINE_CONFIG.DEFAULT_MODE,
+    displayModeLabel: '原始温度',
+    modeDesc: '',
     // K线数据
     klineData: [],
     // 加载状态
     loading: false,
     // 错误信息
-    errorMsg: ''
+    errorMsg: '',
+    // AI分析状态
+    analyzing: false,
+    analysisReport: '',
+    reportTime: ''
   },
 
   onLoad() {
+    // 设置初始显示模式标签和说明
+    const defaultMode = config.DISPLAY_MODES.find(m => m.value === config.KLINE_CONFIG.DEFAULT_MODE);
+    this.setData({
+      displayModeLabel: defaultMode ? defaultMode.label : '原始温度',
+      modeDesc: defaultMode ? defaultMode.desc : ''
+    });
+
     // 页面加载时获取默认城市的数据
     this.loadKlineData(config.KLINE_CONFIG.DEFAULT_CITY);
   },
@@ -29,12 +46,16 @@ Page({
    * 加载K线数据
    */
   loadKlineData(city) {
-    this.setData({ loading: true, errorMsg: '' });
+    this.setData({
+      loading: true,
+      errorMsg: '',
+      analysisReport: ''  // 清除旧的报告
+    });
 
     getKlineData(city).then(result => {
       const dailyData = result.data || result;
-      // 将日度数据聚合成周K线
-      const weeklyData = this.aggregateToWeekly(dailyData);
+      // 根据显示模式聚合成周K线
+      const weeklyData = this.aggregateToWeekly(dailyData, this.data.displayMode);
       this.setData({
         klineData: weeklyData,
         loading: false
@@ -54,38 +75,175 @@ Page({
 
   /**
    * 将每日数据聚合成周K线
+   * @param {Array} dailyData - 日度数据
+   * @param {String} mode - 显示模式
    */
-  aggregateToWeekly(dailyData) {
+  aggregateToWeekly(dailyData, mode) {
     if (!dailyData || dailyData.length === 0) return [];
 
     const weekMap = new Map();
 
+    // 先收集所有数据按周分组
     dailyData.forEach(day => {
       const weekNum = this.getWeekNumber(day.date);
       if (!weekMap.has(weekNum)) {
         weekMap.set(weekNum, {
           dates: [],
-          temps: []
+          tempMaxList: [],
+          tempMinList: [],
+          ranges: [],
+          avgTemps: []
         });
       }
-      weekMap.get(weekNum).dates.push(day.date);
-      weekMap.get(weekNum).temps.push(day.tempMin, day.tempMax);
+      const weekData = weekMap.get(weekNum);
+      weekData.dates.push(day.date);
+      weekData.tempMaxList.push(day.tempMax);
+      weekData.tempMinList.push(day.tempMin);
+      weekData.ranges.push(day.tempMax - day.tempMin);
+      weekData.avgTemps.push((day.tempMax + day.tempMin) / 2);
     });
+
+    // 计算全年统计量（用于某些模式）
+    const allAvgTemps = [];
+    dailyData.forEach(day => {
+      allAvgTemps.push((day.tempMax + day.tempMin) / 2);
+    });
+    const yearlyAvg = allAvgTemps.reduce((a, b) => a + b, 0) / allAvgTemps.length;
+    const yearlyStd = Math.sqrt(
+      allAvgTemps.reduce((sum, t) => sum + Math.pow(t - yearlyAvg, 2), 0) / allAvgTemps.length
+    );
 
     const weeklyData = [];
 
+    // 先生成基础周数据
+    const baseWeeklyData = [];
+    weekMap.forEach((value, weekNum) => {
+      const weekAvg = (Math.max(...value.tempMaxList) + Math.min(...value.tempMinList)) / 2;
+      baseWeeklyData.push({
+        week: weekNum,
+        dates: value.dates,
+        tempMaxList: value.tempMaxList,
+        tempMinList: value.tempMinList,
+        ranges: value.ranges,
+        weekAvg: weekAvg
+      });
+    });
+
+    baseWeeklyData.sort((a, b) => a.week.localeCompare(b.week));
+
     weekMap.forEach((value, weekNum) => {
       const dates = value.dates;
-      const temps = value.temps;
+      const tempMaxList = value.tempMaxList;
+      const tempMinList = value.tempMinList;
+      const ranges = value.ranges;
 
-      // 周一最低温 = 开盘价
-      const open = temps[0];
-      // 周日最低温 = 收盘价
-      const close = temps[temps.length - 2];
-      // 本周最高温 = 最高价
-      const high = Math.max(...temps);
-      // 本周最低温 = 最低价
-      const low = Math.min(...temps);
+      let open, close, high, low;
+
+      switch (mode) {
+        case 'zscore':
+          // Z-score标准化：(温度-均值)/标准差，突出异常周
+          // 波动大的城市K线更明显
+          const weekZScores = tempMaxList.map(t => (t - yearlyAvg) / yearlyStd);
+          const weekMinZScores = tempMinList.map(t => (t - yearlyAvg) / yearlyStd);
+          open = weekZScores[0];
+          close = weekZScores[weekZScores.length - 1];
+          high = Math.max(...weekZScores);
+          low = Math.min(...weekMinZScores);
+          break;
+
+        case 'weekChange':
+          // 环比变化率：(本周-上周)/上周 * 100
+          // 不同城市的变化节奏会很不一祥
+          const currentWeekAvg = (Math.max(...tempMaxList) + Math.min(...tempMinList)) / 2;
+          // 找到上一周的平均温度
+          const currentIndex = baseWeeklyData.findIndex(d => d.week === weekNum);
+          if (currentIndex > 0) {
+            const prevWeekAvg = baseWeeklyData[currentIndex - 1].weekAvg;
+            const changeRate = ((currentWeekAvg - prevWeekAvg) / prevWeekAvg) * 100;
+
+            // 用周内变化构造K线
+            const weekAvgList = dates.map((_, i) =>
+              (tempMaxList[i] + tempMinList[i]) / 2
+            );
+            const firstDayAvg = weekAvgList[0];
+            const lastDayAvg = weekAvgList[weekAvgList.length - 1];
+            open = ((firstDayAvg - prevWeekAvg) / prevWeekAvg) * 100;
+            close = ((lastDayAvg - prevWeekAvg) / prevWeekAvg) * 100;
+            high = changeRate + 2; // 加一些波动
+            low = changeRate - 2;
+          } else {
+            // 第一周，用0作为基准
+            open = 0;
+            close = 0;
+            high = 5;
+            low = -5;
+          }
+          break;
+
+        case 'cumulative':
+          // 累积距平：累积每周与均值的偏差
+          // 会产生明显的上升/下降趋势
+          const cumIndex = baseWeeklyData.findIndex(d => d.week === weekNum);
+          let cumulativeSum = 0;
+          for (let i = 0; i <= cumIndex; i++) {
+            const w = baseWeeklyData[i];
+            cumulativeSum += w.weekAvg - yearlyAvg;
+          }
+
+          // 本周内的累积变化
+          const weekCumStart = cumIndex > 0 ?
+            (cumulativeSum - (baseWeeklyData[cumIndex].weekAvg - yearlyAvg)) : 0;
+          open = weekCumStart;
+          close = cumulativeSum;
+          high = cumulativeSum + 2;
+          low = weekCumStart - 1;
+          break;
+
+        case 'acceleration':
+          // 温度加速度：二阶导数，变化的变化率
+          // 对温度变化非常敏感
+          const accIndex = baseWeeklyData.findIndex(d => d.week === weekNum);
+
+          if (accIndex >= 2) {
+            const prevWeek2 = baseWeeklyData[accIndex - 2].weekAvg;
+            const prevWeek1 = baseWeeklyData[accIndex - 1].weekAvg;
+            const currWeek = baseWeeklyData[accIndex].weekAvg;
+
+            // 二阶差分（加速度）
+            const firstChange = prevWeek1 - prevWeek2;
+            const secondChange = currWeek - prevWeek1;
+            const acceleration = secondChange - firstChange;
+
+            open = firstChange;
+            close = secondChange;
+            // 用加速度来扩展高低点
+            high = acceleration > 0 ? Math.max(firstChange, secondChange) + Math.abs(acceleration) : Math.max(firstChange, secondChange) + 2;
+            low = acceleration < 0 ? Math.min(firstChange, secondChange) - Math.abs(acceleration) : Math.min(firstChange, secondChange) - 2;
+          } else {
+            open = 0;
+            close = 0;
+            high = 5;
+            low = -5;
+          }
+          break;
+
+        case 'range':
+          // 昼夜温差模式
+          open = ranges[0];
+          close = ranges[ranges.length - 1];
+          high = Math.max(...ranges);
+          low = Math.min(...ranges);
+          break;
+
+        case 'original':
+        default:
+          // 原始温度模式
+          open = tempMinList[0];
+          close = tempMinList[tempMinList.length - 1];
+          high = Math.max(...tempMaxList);
+          low = Math.min(...tempMinList);
+          break;
+      }
 
       weeklyData.push({
         week: weekNum,
@@ -97,7 +255,19 @@ Page({
       });
     });
 
-    return weeklyData.sort((a, b) => a.week - b.week);
+    return weeklyData.sort((a, b) => a.week.localeCompare(b.week));
+  },
+
+  /**
+   * 计算全年平均温度
+   */
+  calculateYearlyAverage(dailyData) {
+    const allTemps = [];
+    dailyData.forEach(day => {
+      allTemps.push(day.tempMax, day.tempMin);
+    });
+    const sum = allTemps.reduce((a, b) => a + b, 0);
+    return sum / allTemps.length;
   },
 
   /**
@@ -126,6 +296,22 @@ Page({
   },
 
   /**
+   * 显示模式选择变化
+   */
+  onModeChange(e) {
+    const index = e.detail.value;
+    const mode = this.data.displayModes[index];
+    this.setData({
+      displayMode: mode.value,
+      displayModeLabel: mode.label,
+      modeDesc: mode.desc,
+      analysisReport: ''  // 清除旧的报告
+    });
+    // 重新加载数据
+    this.loadKlineData(this.data.selectedCity);
+  },
+
+  /**
    * 下拉刷新
    */
   onPullDownRefresh() {
@@ -133,5 +319,133 @@ Page({
     setTimeout(() => {
       wx.stopPullDownRefresh();
     }, 1000);
+  },
+
+  /**
+   * 生成AI分析报告
+   */
+  onGenerateReport() {
+    const { selectedCity, selectedCityName, displayMode, analyzing } = this.data;
+
+    if (analyzing) return;
+
+    this.setData({ analyzing: true });
+    wx.showLoading({
+      title: '加载中...',
+      mask: true
+    });
+
+    // 先尝试从数据库获取报告
+    wx.cloud.callFunction({
+      name: 'analyze-kline',
+      data: {
+        action: 'get',
+        city: selectedCity,
+        mode: displayMode
+      }
+    }).then(res => {
+      wx.hideLoading();
+
+      if (res.result.success) {
+        // 从数据库获取成功，显示报告
+        const timestamp = new Date(res.result.timestamp);
+        const timeStr = `${timestamp.getFullYear()}-${String(timestamp.getMonth() + 1).padStart(2, '0')}-${String(timestamp.getDate()).padStart(2, '0')}`;
+
+        this.setData({
+          analysisReport: res.result.report,
+          reportTime: timeStr,
+          analyzing: false
+        });
+
+        // 滚动到报告区域
+        setTimeout(() => {
+          wx.pageScrollTo({
+            selector: '.report-card',
+            duration: 300
+          });
+        }, 100);
+      } else {
+        // 数据库中没有报告
+        this.setData({ analyzing: false });
+        wx.showModal({
+          title: '提示',
+          content: '该报告尚未生成，请联系管理员在管理后台生成报告',
+          showCancel: false,
+          confirmText: '知道了'
+        });
+      }
+    }).catch(err => {
+      wx.hideLoading();
+      console.error('获取报告失败:', err);
+      this.setData({ analyzing: false });
+
+      wx.showToast({
+        title: '获取报告失败',
+        icon: 'none',
+        duration: 2000
+      });
+    });
+  },
+
+  /**
+   * 分享报告
+   */
+  onShareReport() {
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline']
+    });
+
+    wx.showToast({
+      title: '点击右上角分享给好友',
+      icon: 'none',
+      duration: 2000
+    });
+  },
+
+  /**
+   * 分享到好友
+   */
+  onShareAppMessage() {
+    const { selectedCityName, analysisReport } = this.data;
+
+    // 提取报告的关键句作为分享内容
+    let shareTitle = `${selectedCityName}年度天气K线分析`;
+
+    if (analysisReport) {
+      // 尝试提取标题
+      const titleMatch = analysisReport.match(/【(.+?)】/);
+      if (titleMatch) {
+        shareTitle = titleMatch[1];
+      }
+    }
+
+    return {
+      title: shareTitle,
+      path: '/pages/index/index',
+      imageUrl: '' // 可以后续生成海报图片
+    };
+  },
+
+  /**
+   * 分享到朋友圈
+   */
+  onShareTimeline() {
+    const { selectedCityName, analysisReport } = this.data;
+
+    let shareTitle = `${selectedCityName}年度天气K线分析 - 有意思的数据洞察`;
+
+    if (analysisReport) {
+      const titleMatch = analysisReport.match(/【(.+?)】/);
+      if (titleMatch) {
+        shareTitle = titleMatch[1];
+      }
+    }
+
+    return {
+      title: shareTitle,
+      query: '',
+      imageUrl: '' // 可以后续生成海报图片
+    };
   }
 });

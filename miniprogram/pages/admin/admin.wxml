@@ -1,0 +1,95 @@
+<!--pages/admin/admin.wxml-->
+<view class="admin-container">
+  <view class="admin-header">
+    <text class="admin-title">🎛️ 数据管理</text>
+    <text class="admin-subtitle">AI分析报告管理</text>
+  </view>
+
+  <!-- 报告生成区域 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">📊 批量生成AI分析报告</text>
+    </view>
+    <view class="card-content">
+      <text class="card-desc">为所有城市和模式组合生成AI分析报告，首次使用或数据更新后需要重新生成。</text>
+
+      <view class="info-section">
+        <view class="info-item">
+          <text class="info-label">城市数量：</text>
+          <text class="info-value">{{cityCount}}个</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">模式数量：</text>
+          <text class="info-value">{{modeCount}}个</text>
+        </view>
+        <view class="info-item">
+          <text class="info-label">预计生成：</text>
+          <text class="info-value highlight">{{totalReports}}份报告</text>
+        </view>
+      </view>
+
+      <view class="progress-section" wx:if="{{generating}}">
+        <view class="progress-info">
+          <text class="progress-label">{{progressText}}</text>
+          <text class="progress-count">{{currentCount}}/{{totalReports}}</text>
+        </view>
+        <view class="progress-bar">
+          <view class="progress-fill" style="width: {{progress}}%"></view>
+        </view>
+      </view>
+
+      <button
+        class="action-btn primary"
+        bindtap="onGenerateAll"
+        disabled="{{generating}}"
+      >
+        <text wx:if="{{!generating}}">🚀 开始批量生成</text>
+        <text wx:else>⏳ 生成中...</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 已生成报告列表 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">📋 已生成报告列表</text>
+    </view>
+    <view class="card-content">
+      <view wx:if="{{reportList.length > 0}}" class="report-list">
+        <view class="report-item" wx:for="{{reportList}}" wx:key="index">
+          <view class="report-info">
+            <text class="report-city">{{item.cityName}}</text>
+            <text class="report-mode">{{item.modeLabel}}</text>
+          </view>
+          <text class="report-time">{{item.time}}</text>
+        </view>
+      </view>
+      <view wx:else class="empty-state">
+        <text class="empty-text">暂无报告，请先生成</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 数据统计 -->
+  <view class="card">
+    <view class="card-header">
+      <text class="card-title">📈 数据统计</text>
+    </view>
+    <view class="card-content">
+      <view class="stats-grid">
+        <view class="stat-item">
+          <text class="stat-value">{{stats.totalReports}}</text>
+          <text class="stat-label">已生成报告</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{stats.totalCities}}</text>
+          <text class="stat-label">覆盖城市</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{stats.totalModes}}</text>
+          <text class="stat-label">覆盖模式</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -6,6 +6,7 @@
  * 返回: 日度天气数据数组
  */
 const cloud = require('wx-server-sdk');
+const { DB_CONFIG } = require('./config.js');
 
 // 初始化 cloud
 cloud.init({
@@ -26,15 +27,37 @@ exports.main = async (event, context) => {
   }
 
   try {
-    // 从云数据库查询该城市的所有日度数据
-    const result = await db.collection('weather_data')
+    // 先获取总数
+    const countResult = await db.collection(DB_CONFIG.WEATHER_COLLECTION)
       .where({
         city: city
       })
-      .orderBy('date', 'asc')
-      .get();
+      .count();
 
-    if (result.data.length === 0) {
+    const total = countResult.total;
+    console.log('城市 ' + city + ' 共有 ' + total + ' 条记录');
+
+    // 分批获取所有数据
+    const allData = [];
+    const batchTimes = Math.ceil(total / DB_CONFIG.MAX_LIMIT);
+
+    for (let i = 0; i < batchTimes; i++) {
+      const result = await db.collection(DB_CONFIG.WEATHER_COLLECTION)
+        .where({
+          city: city
+        })
+        .skip(i * DB_CONFIG.MAX_LIMIT)
+        .limit(DB_CONFIG.MAX_LIMIT)
+        .orderBy('date', 'asc')
+        .get();
+
+      allData.push(...result.data);
+      console.log('已获取第 ' + (i + 1) + ' 批，共 ' + result.data.length + ' 条');
+    }
+
+    console.log('总共获取 ' + allData.length + ' 条记录');
+
+    if (allData.length === 0) {
       return {
         success: false,
         error: '未找到该城市的数据'
@@ -43,7 +66,8 @@ exports.main = async (event, context) => {
 
     return {
       success: true,
-      data: result.data
+      data: allData,
+      total: total
     };
 
   } catch (err) {

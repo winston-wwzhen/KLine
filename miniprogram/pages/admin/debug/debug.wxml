@@ -1,0 +1,38 @@
+<view class="container">
+  <view class="header">
+    <text class="title">数据调试页面</text>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="card">
+    <view class="title">快捷入口</view>
+    <view class="button-group">
+      <button class="nav-btn" bindtap="goToSync">🔄 数据同步</button>
+      <button class="nav-btn primary" bindtap="goToAIAdmin">🤖 AI报告管理</button>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="info">数据库中共 {{recordCount}} 条记录</view>
+    <view class="info">城市: {{city}}</view>
+  </view>
+
+  <view class="card" wx:if="{{sampleData.length > 0}}">
+    <view class="title">前10条数据:</view>
+    <view class="data-list">
+      <view class="data-item" wx:for="{{sampleData}}" wx:key="date">
+        <text class="date">{{item.date}}</text>
+        <text>最高:{{item.tempMax}}° 最低:{{item.tempMin}}°</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="card log-card">
+    <view class="title">日志</view>
+    <scroll-view class="log-container" scroll-y>
+      <view class="log-item" wx:for="{{logs}}" wx:key="index">
+        <text>{{item}}</text>
+      </view>
+    </scroll-view>
+  </view>
+</view>

@@ -1,0 +1,9 @@
+{
+  "name": "analyze-kline",
+  "version": "1.0.0",
+  "description": "AI analysis for K-line data using GLM-4.7",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}
