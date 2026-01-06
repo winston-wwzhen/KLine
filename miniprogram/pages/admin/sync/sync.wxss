@@ -1,0 +1,183 @@
+/* pages/admin/sync/sync.wxss */
+.container {
+  padding: 30rpx;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 30rpx;
+}
+
+.title {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 卡片 */
+.card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.log-card {
+  min-height: 400rpx;
+}
+
+.log-count {
+  font-size: 24rpx;
+  color: #999;
+  font-weight: normal;
+}
+
+/* 进度条 */
+.progress-info {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 20rpx;
+}
+
+.progress-text {
+  font-size: 56rpx;
+  font-weight: bold;
+  color: #1890ff;
+  margin-right: 10rpx;
+}
+
+.progress-detail {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.progress-bar {
+  height: 16rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  overflow: hidden;
+  margin-bottom: 30rpx;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #1890ff;
+  transition: width 0.3s;
+}
+
+/* 统计 */
+.stats {
+  display: flex;
+  justify-content: space-around;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 按钮 */
+.actions {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.btn {
+  flex: 1;
+  height: 88rpx;
+  line-height: 88rpx;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  border: none;
+}
+
+.btn-primary {
+  background-color: #1890ff;
+  color: #fff;
+}
+
+.btn-danger {
+  background-color: #ff4d4f;
+  color: #fff;
+}
+
+.btn-secondary {
+  background-color: #fff;
+  color: #666;
+  border: 1rpx solid #d9d9d9;
+}
+
+.btn[disabled] {
+  opacity: 0.5;
+}
+
+/* 日志 */
+.log-container {
+  height: 500rpx;
+  background-color: #f9f9f9;
+  border-radius: 8rpx;
+  padding: 20rpx;
+}
+
+.log-item {
+  font-size: 24rpx;
+  color: #666;
+  line-height: 1.8;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+.log-empty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #ccc;
+  font-size: 24rpx;
+}
+
+/* 说明 */
+.tips {
+  background-color: #fff7e6;
+  border: 1rpx solid #ffd591;
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.tips-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #fa8c16;
+  margin-bottom: 10rpx;
+}
+
+.tips-text {
+  display: block;
+  font-size: 24rpx;
+  color: #8c8c8c;
+  line-height: 1.8;
+}

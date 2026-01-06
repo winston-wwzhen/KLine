@@ -1,0 +1,87 @@
+<!--pages/admin/sync/sync.wxml-->
+<view class="container">
+  <view class="header">
+    <text class="title">数据同步管理</text>
+  </view>
+
+  <!-- 进度卡片 -->
+  <view class="card">
+    <view class="card-title">同步进度</view>
+    <view class="progress-info">
+      <text class="progress-text">{{progress}}%</text>
+      <text class="progress-detail">({{stats.syncedCities}}/{{stats.totalCities}} 城市)</text>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progress}}%"></view>
+    </view>
+    <view class="stats">
+      <view class="stat-item">
+        <text class="stat-value">{{stats.syncedCities}}</text>
+        <text class="stat-label">成功</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.failedCities}}</text>
+        <text class="stat-label">失败</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{currentBatch}}/{{totalBatches}}</text>
+        <text class="stat-label">批次</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="actions">
+    <button
+      wx:if="{{!syncing}}"
+      class="btn btn-primary"
+      bindtap="startSync"
+    >
+      开始同步
+    </button>
+    <button
+      wx:else
+      class="btn btn-danger"
+      bindtap="stopSync"
+    >
+      停止同步
+    </button>
+    <button
+      class="btn btn-secondary"
+      bindtap="clearLogs"
+      disabled="{{syncing}}"
+    >
+      清空日志
+    </button>
+  </view>
+
+  <!-- 同步日志 -->
+  <view class="card log-card">
+    <view class="card-title">
+      同步日志
+      <text class="log-count">({{logs.length}})</text>
+    </view>
+    <scroll-view id="log-container" class="log-container" scroll-y scroll-into-view="log-bottom">
+      <view class="log-list">
+        <block wx:if="{{logs.length > 0}}">
+          <view class="log-item" wx:for="{{logs}}" wx:key="index">
+            <text>{{item}}</text>
+          </view>
+        </block>
+        <view wx:else class="log-empty">
+          <text>暂无日志</text>
+        </view>
+        <view id="log-bottom"></view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 说明 -->
+  <view class="tips">
+    <text class="tips-title">💡 说明</text>
+    <text class="tips-text">• 每批同步3个城市，共11批</text>
+    <text class="tips-text">• 每批约需50-60秒</text>
+    <text class="tips-text">• 总计约10分钟完成</text>
+    <text class="tips-text">• 可随时停止，下次可继续</text>
+  </view>
+</view>
