@@ -1,13 +1,13 @@
 // pages/admin/admin.js
-const { PROVINCE_CAPITALS } = require('../../utils/data.js');
+const { CITIES } = require('../../utils/cities.js');
 const { DISPLAY_MODES } = require('../../utils/config.js');
 const { getKlineData } = require('../../utils/request.js');
 
 Page({
   data: {
-    cityCount: PROVINCE_CAPITALS.length,
+    cityCount: CITIES.length,
     modeCount: DISPLAY_MODES.length,
-    totalReports: PROVINCE_CAPITALS.length * DISPLAY_MODES.length,
+    totalReports: CITIES.length * DISPLAY_MODES.length,
     generating: false,
     progress: 0,
     progressText: '',
@@ -113,7 +113,7 @@ Page({
       currentCount: 0
     });
 
-    const cities = PROVINCE_CAPITALS;
+    const cities = CITIES;
     const modes = DISPLAY_MODES;
     let successCount = 0;
     let failCount = 0;

@@ -1,14 +1,14 @@
 /**
  * 主页面 - K线图展示
  */
-const { PROVINCE_CAPITALS } = require('../../utils/data.js');
+const { CITIES } = require('../../utils/cities.js');
 const { getKlineData } = require('../../utils/request.js');
 const config = require('../../utils/config.js');
 
 Page({
   data: {
     // 城市列表
-    cities: PROVINCE_CAPITALS,
+    cities: CITIES,
     // 当前选中城市
     selectedCity: config.KLINE_CONFIG.DEFAULT_CITY,
     selectedCityName: config.KLINE_CONFIG.DEFAULT_CITY_NAME,
